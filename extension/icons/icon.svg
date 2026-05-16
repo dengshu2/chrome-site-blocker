@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Site Blocker icon">
+  <rect width="128" height="128" rx="24" fill="#f6f4eb"/>
+  <path d="M64 15 99 29l-8 53-27 31-27-31-8-53 35-14Z" fill="#2b8454"/>
+  <path d="M39 91 91 39" stroke="#f6f4eb" stroke-width="20" stroke-linecap="round"/>
+  <path d="M39 91 91 39" stroke="#bc4130" stroke-width="10" stroke-linecap="round"/>
+</svg>

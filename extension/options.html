@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Site Blocker 设置</title>
+    <link rel="stylesheet" href="shared.css">
+    <link rel="stylesheet" href="options.css">
+  </head>
+  <body>
+    <main class="options-layout">
+      <section class="intro">
+        <p class="eyebrow">Site Blocker</p>
+        <h1>管理要屏蔽的网站</h1>
+        <p>
+          添加域名后，访问该域名及其子域名时会进入拦截页。
+          支持 <code>example.com</code> 和 <code>*.example.com</code> 规则。
+        </p>
+      </section>
+
+      <section class="settings-panel" aria-label="屏蔽设置">
+        <div class="setting-row">
+          <div>
+            <h2>启用屏蔽</h2>
+            <p>关闭后，名单会保留，但不会拦截网站。</p>
+          </div>
+          <label class="switch" title="启用或停用屏蔽">
+            <input id="enabledToggle" type="checkbox">
+            <span></span>
+          </label>
+        </div>
+
+        <form id="addSiteForm" class="add-form">
+          <label for="siteInput">添加网站</label>
+          <div class="add-form__controls">
+            <input id="siteInput" type="text" placeholder="youtube.com" autocomplete="off">
+            <button class="button button--primary" type="submit">添加</button>
+          </div>
+          <p id="formMessage" class="form-message" role="status"></p>
+        </form>
+
+        <div class="list-header">
+          <h2>黑名单</h2>
+          <span id="siteCount">0 个网站</span>
+        </div>
+
+        <ul id="blockedList" class="blocked-list"></ul>
+
+        <div id="emptyState" class="empty-state">
+          <strong>还没有屏蔽网站</strong>
+          <p>在上方输入域名，或打开目标网站后用扩展弹窗快速加入。</p>
+        </div>
+      </section>
+    </main>
+
+    <script src="options.js"></script>
+  </body>
+</html>

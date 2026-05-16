@@ -1,0 +1,15 @@
+.DS_Store
+
+# Generated extension packages
+dist/
+*.crx
+*.zip
+
+# Private extension signing keys
+keys/
+*.pem
+
+# Local editor files
+.idea/
+.vscode/
+*.swp

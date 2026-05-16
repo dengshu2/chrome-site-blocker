@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Site Blocker</title>
+    <link rel="stylesheet" href="shared.css">
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body class="popup-shell">
+    <main class="popup">
+      <header class="popup__header">
+        <div>
+          <p class="eyebrow">Site Blocker</p>
+          <h1>网站屏蔽</h1>
+        </div>
+        <label class="switch" title="启用或停用屏蔽">
+          <input id="enabledToggle" type="checkbox">
+          <span></span>
+        </label>
+      </header>
+
+      <section class="current-site" aria-live="polite">
+        <span class="label">当前网站</span>
+        <strong id="currentHost">读取中...</strong>
+        <p id="currentStatus">正在检查是否在黑名单中。</p>
+      </section>
+
+      <div class="actions">
+        <button id="toggleSiteButton" class="button button--primary" type="button" disabled>
+          加入黑名单
+        </button>
+        <button id="openOptionsButton" class="button" type="button">
+          管理名单
+        </button>
+      </div>
+    </main>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>访问已被屏蔽</title>
+    <link rel="stylesheet" href="shared.css">
+    <link rel="stylesheet" href="blocked.css">
+  </head>
+  <body class="blocked-shell">
+    <main class="blocked-panel">
+      <p class="eyebrow">Blocked</p>
+      <h1>这个网站已被屏蔽</h1>
+      <p class="blocked-copy">
+        <strong id="blockedSite">当前网站</strong>
+        在你的黑名单中，所以这次访问已停止。
+      </p>
+      <p id="blockedUrl" class="blocked-url"></p>
+      <div class="blocked-actions">
+        <button id="backButton" class="button" type="button">返回上一页</button>
+        <button id="optionsButton" class="button button--primary" type="button">管理黑名单</button>
+      </div>
+    </main>
+
+    <script src="blocked.js"></script>
+  </body>
+</html>
