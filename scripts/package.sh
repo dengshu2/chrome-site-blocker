@@ -11,6 +11,7 @@ CHROME_BIN="${CHROME_BIN:-}"
 
 mkdir -p "$DIST_DIR"
 rm -f "$ZIP_PATH"
+rm -f "$CRX_PATH"
 
 (
   cd "$EXTENSION_DIR"
@@ -28,4 +29,6 @@ if [[ -n "$CHROME_BIN" && -f "$KEY_PATH" ]]; then
     --pack-extension-key="$KEY_PATH"
   mv "$ROOT_DIR/extension.crx" "$CRX_PATH"
   echo "Created $CRX_PATH"
+elif [[ -n "$CHROME_BIN" ]]; then
+  echo "Skipped CRX: key not found at $KEY_PATH"
 fi

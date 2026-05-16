@@ -14,7 +14,7 @@
         <h1>管理要屏蔽的网站</h1>
         <p>
           添加域名后，访问该域名及其子域名时会进入拦截页。
-          支持 <code>example.com</code> 和 <code>*.example.com</code> 规则。
+          支持 <code>example.com</code> 和 <code>*.example.com</code> 规则，最多 500 条。
         </p>
       </section>
 
@@ -25,7 +25,7 @@
             <p>关闭后，名单会保留，但不会拦截网站。</p>
           </div>
           <label class="switch" title="启用或停用屏蔽">
-            <input id="enabledToggle" type="checkbox">
+            <input id="enabledToggle" type="checkbox" aria-label="启用屏蔽">
             <span></span>
           </label>
         </div>

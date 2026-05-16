@@ -3,6 +3,8 @@ const DEFAULT_SETTINGS = {
   blockedSites: []
 };
 
+const MAX_BLOCKED_SITES = 500;
+
 const enabledToggle = document.querySelector("#enabledToggle");
 const addSiteForm = document.querySelector("#addSiteForm");
 const siteInput = document.querySelector("#siteInput");
@@ -33,12 +35,30 @@ function normalizeEntry(value) {
   }
 }
 
+function isValidHostname(hostname) {
+  const labels = hostname.split(".");
+
+  if (labels.length < 2 || hostname.length > 253) {
+    return false;
+  }
+
+  return labels.every((label) => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label));
+}
+
 function isValidEntry(entry) {
   if (!entry || entry === "*" || entry.includes("..")) {
     return false;
   }
 
-  return /^[a-z0-9*.-]+$/.test(entry) && entry.includes(".");
+  if (entry.startsWith("*.")) {
+    return isValidHostname(entry.slice(2));
+  }
+
+  if (entry.includes("*")) {
+    return false;
+  }
+
+  return isValidHostname(entry);
 }
 
 function getBlockedSites() {
@@ -50,10 +70,36 @@ function setMessage(message, isError = false) {
   formMessage.classList.toggle("is-error", isError);
 }
 
-async function saveSettings(nextSettings) {
-  settings = nextSettings;
-  await chrome.storage.sync.set(nextSettings);
-  render();
+async function syncRules() {
+  const response = await chrome.runtime.sendMessage({ type: "syncRules" });
+
+  if (!response?.ok) {
+    throw new Error(response?.error || "规则同步失败。");
+  }
+}
+
+async function saveSettings(nextSettings, successMessage = "") {
+  const previousSettings = settings;
+
+  try {
+    settings = nextSettings;
+    await chrome.storage.local.set(nextSettings);
+    render();
+    await syncRules();
+
+    if (successMessage) {
+      setMessage(successMessage);
+    }
+
+    return true;
+  } catch (error) {
+    settings = previousSettings;
+    await chrome.storage.local.set(previousSettings).catch(() => {});
+    await syncRules().catch(() => {});
+    render();
+    setMessage(`保存失败：${error?.message || "请稍后重试。"}`, true);
+    return false;
+  }
 }
 
 function render() {
@@ -74,8 +120,7 @@ function render() {
     button.textContent = "移除";
     button.addEventListener("click", async () => {
       const nextSites = getBlockedSites().filter((candidate) => candidate !== site);
-      await saveSettings({ ...settings, blockedSites: nextSites });
-      setMessage(`已移除 ${site}`);
+      await saveSettings({ ...settings, blockedSites: nextSites }, `已移除 ${site}`);
     });
 
     item.append(label, button);
@@ -84,7 +129,7 @@ function render() {
 }
 
 async function loadSettings() {
-  settings = await chrome.storage.sync.get(DEFAULT_SETTINGS);
+  settings = await chrome.storage.local.get(DEFAULT_SETTINGS);
   render();
 }
 
@@ -104,20 +149,27 @@ addSiteForm.addEventListener("submit", async (event) => {
 
   const blockedSites = getBlockedSites();
 
+  if (blockedSites.length >= MAX_BLOCKED_SITES) {
+    setMessage(`黑名单最多支持 ${MAX_BLOCKED_SITES} 个网站。`, true);
+    return;
+  }
+
   if (blockedSites.includes(entry)) {
     setMessage(`${entry} 已经在黑名单中。`, true);
     return;
   }
 
   const nextSites = [...blockedSites, entry].sort();
-  await saveSettings({ ...settings, blockedSites: nextSites });
-  siteInput.value = "";
-  siteInput.focus();
-  setMessage(`已添加 ${entry}`);
+  const saved = await saveSettings({ ...settings, blockedSites: nextSites }, `已添加 ${entry}`);
+
+  if (saved) {
+    siteInput.value = "";
+    siteInput.focus();
+  }
 });
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName !== "sync") {
+  if (areaName !== "local") {
     return;
   }
 

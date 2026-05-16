@@ -6,7 +6,7 @@
 
 - 在弹窗里一键屏蔽或取消屏蔽当前网站。
 - 在选项页管理屏蔽列表。
-- 支持 `example.com` 和 `*.example.com` 形式的域名规则。
+- 支持 `example.com` 和 `*.example.com` 形式的域名规则，最多 500 条。
 - 使用 Chrome `declarativeNetRequest` 动态规则拦截主页面请求。
 - 不包含远程脚本、分析 SDK 或外部服务调用。
 
@@ -50,7 +50,7 @@ CHROME_EXTENSION_KEY="/path/to/site-blocker-extension.pem" \
 ## 权限说明
 
 - `declarativeNetRequest`: 根据用户配置的规则拦截或重定向网站访问。
-- `storage`: 保存启用状态和屏蔽列表。
+- `storage`: 在本机保存启用状态和屏蔽列表。
 - `http://*/*`、`https://*/*`: 允许用户屏蔽任意网站。
 
 ## 发布提醒

@@ -4,12 +4,12 @@ Chrome Site Blocker is designed to run locally in your browser.
 
 ## Data Stored
 
-The extension stores these settings in Chrome extension storage:
+The extension stores these settings in local Chrome extension storage:
 
 - Whether blocking is enabled.
 - The website rules you add to the block list.
 
-When Chrome sync is enabled for extensions, Chrome may sync this extension data through your Google account according to your Chrome sync settings.
+The extension uses `chrome.storage.local`, so your block list is not synced through Chrome extension sync by this extension.
 
 ## Data Not Collected
 

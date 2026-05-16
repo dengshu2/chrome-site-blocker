@@ -8,7 +8,7 @@
 - 在设置页维护黑名单。
 - 使用 Chrome Manifest V3 `declarativeNetRequest` 动态规则拦截主页面请求。
 - 访问黑名单域名或其子域名时跳转到扩展内置拦截页。
-- 支持 `example.com`、`*.example.com` 这类域名规则。
+- 支持 `example.com`、`*.example.com` 这类域名规则，最多 500 条。
 
 ## 本地安装
 

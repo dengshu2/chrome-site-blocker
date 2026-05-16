@@ -3,6 +3,8 @@ const DEFAULT_SETTINGS = {
   blockedSites: []
 };
 
+const MAX_BLOCKED_SITES = 500;
+
 const state = {
   tab: null,
   host: "",
@@ -22,6 +24,10 @@ function normalizeEntry(value) {
     return "";
   }
 
+  if (text.startsWith("*.")) {
+    return `*.${normalizeEntry(text.slice(2))}`;
+  }
+
   const withProtocol = text.includes("://") ? text : `https://${text}`;
 
   try {
@@ -31,12 +37,26 @@ function normalizeEntry(value) {
   }
 }
 
-function normalizeHost(hostname) {
-  return hostname.toLowerCase().replace(/\.$/, "");
+function isValidHostname(hostname) {
+  const labels = hostname.split(".");
+
+  if (labels.length < 2 || hostname.length > 253) {
+    return false;
+  }
+
+  return labels.every((label) => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label));
 }
 
-function escapeRegExp(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function isValidEntry(entry) {
+  if (!entry || entry.includes("*")) {
+    return false;
+  }
+
+  return isValidHostname(entry);
+}
+
+function normalizeHost(hostname) {
+  return hostname.toLowerCase().replace(/\.$/, "");
 }
 
 function matchesPattern(hostname, pattern) {
@@ -49,23 +69,34 @@ function matchesPattern(hostname, pattern) {
 
   if (rule.startsWith("*.")) {
     const base = rule.slice(2);
-    return host === base || host.endsWith(`.${base}`);
+    return isValidHostname(base) && (host === base || host.endsWith(`.${base}`));
   }
 
   if (rule.includes("*")) {
-    const expression = `^${rule.split("*").map(escapeRegExp).join(".*")}$`;
-    return new RegExp(expression).test(host);
+    return false;
   }
 
-  return host === rule || host.endsWith(`.${rule}`);
+  return isValidHostname(rule) && (host === rule || host.endsWith(`.${rule}`));
+}
+
+function baseHostForRule(pattern) {
+  const rule = normalizeHost(pattern.trim());
+
+  return rule.startsWith("*.") ? rule.slice(2) : rule;
 }
 
 function getBlockedSites() {
   return Array.isArray(state.settings.blockedSites) ? state.settings.blockedSites : [];
 }
 
-function isHostBlocked(hostname) {
-  return getBlockedSites().some((site) => matchesPattern(hostname, site));
+function findMatchingRule(hostname) {
+  return getBlockedSites().find((site) => matchesPattern(hostname, site));
+}
+
+function findDirectRule(hostname) {
+  const host = normalizeHost(hostname);
+
+  return getBlockedSites().find((site) => baseHostForRule(site) === host);
 }
 
 function blockedPageUrl(originalUrl, hostname) {
@@ -78,7 +109,7 @@ function blockedPageUrl(originalUrl, hostname) {
 async function loadState() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   state.tab = tab;
-  state.settings = await chrome.storage.sync.get(DEFAULT_SETTINGS);
+  state.settings = await chrome.storage.local.get(DEFAULT_SETTINGS);
   enabledToggle.checked = Boolean(state.settings.enabled);
 
   if (!tab?.url || (!tab.url.startsWith("http://") && !tab.url.startsWith("https://"))) {
@@ -98,26 +129,60 @@ function renderUnsupportedTab() {
 }
 
 function renderCurrentSite() {
-  const blocked = isHostBlocked(state.host);
+  const matchingRule = findMatchingRule(state.host);
+  const directRule = findDirectRule(state.host);
 
   currentHost.textContent = state.host;
-  currentStatus.textContent = blocked
-    ? "这个网站已经在黑名单中，访问时会被拦截。"
+  currentStatus.textContent = matchingRule
+    ? `这个网站会被 ${matchingRule} 规则拦截。`
     : "这个网站还没有加入黑名单。";
-  toggleSiteButton.textContent = blocked ? "移出黑名单" : "加入黑名单";
+  toggleSiteButton.textContent = matchingRule && !directRule ? "管理规则" : matchingRule ? "移出黑名单" : "加入黑名单";
   toggleSiteButton.disabled = false;
 }
 
+async function syncRules() {
+  const response = await chrome.runtime.sendMessage({ type: "syncRules" });
+
+  if (!response?.ok) {
+    throw new Error(response?.error || "规则同步失败。");
+  }
+}
+
 async function setBlockedSites(blockedSites) {
-  state.settings = { ...state.settings, blockedSites };
-  await chrome.storage.sync.set({ blockedSites });
+  const previousSettings = state.settings;
+  const nextSettings = { ...state.settings, blockedSites };
+
+  try {
+    state.settings = nextSettings;
+    await chrome.storage.local.set({ blockedSites });
+    await syncRules();
+  } catch (error) {
+    state.settings = previousSettings;
+    await chrome.storage.local.set({ blockedSites: previousSettings.blockedSites });
+    await syncRules().catch(() => {});
+    renderCurrentSite();
+    currentStatus.textContent = `保存失败：${error?.message || "请稍后重试。"}`;
+    return false;
+  }
+
   renderCurrentSite();
+  return true;
 }
 
 enabledToggle.addEventListener("change", async () => {
   const enabled = enabledToggle.checked;
   state.settings = { ...state.settings, enabled };
-  await chrome.storage.sync.set({ enabled });
+
+  try {
+    await chrome.storage.local.set({ enabled });
+    await syncRules();
+  } catch (error) {
+    enabledToggle.checked = !enabled;
+    state.settings = { ...state.settings, enabled: !enabled };
+    await chrome.storage.local.set({ enabled: !enabled }).catch(() => {});
+    await syncRules().catch(() => {});
+    currentStatus.textContent = `保存失败：${error?.message || "请稍后重试。"}`;
+  }
 });
 
 toggleSiteButton.addEventListener("click", async () => {
@@ -126,16 +191,35 @@ toggleSiteButton.addEventListener("click", async () => {
   }
 
   const blockedSites = getBlockedSites();
+  const matchingRule = findMatchingRule(state.host);
+  const directRule = findDirectRule(state.host);
 
-  if (isHostBlocked(state.host)) {
-    await setBlockedSites(blockedSites.filter((site) => !matchesPattern(state.host, site)));
+  if (matchingRule && !directRule) {
+    chrome.runtime.openOptionsPage();
     return;
   }
 
-  const nextSites = [...blockedSites, normalizeEntry(state.host)].sort();
-  await setBlockedSites(nextSites);
+  if (directRule) {
+    await setBlockedSites(blockedSites.filter((site) => site !== directRule));
+    return;
+  }
 
-  if (state.settings.enabled && state.tab?.id && state.tab.url) {
+  const entry = normalizeEntry(state.host);
+
+  if (!isValidEntry(entry)) {
+    currentStatus.textContent = "当前网站不是可屏蔽的有效域名。";
+    return;
+  }
+
+  if (blockedSites.length >= MAX_BLOCKED_SITES) {
+    currentStatus.textContent = `黑名单最多支持 ${MAX_BLOCKED_SITES} 个网站。`;
+    return;
+  }
+
+  const nextSites = [...blockedSites, entry].sort();
+  const saved = await setBlockedSites(nextSites);
+
+  if (saved && state.settings.enabled && state.tab?.id && state.tab.url) {
     await chrome.tabs.update(state.tab.id, {
       url: blockedPageUrl(state.tab.url, state.host)
     });
