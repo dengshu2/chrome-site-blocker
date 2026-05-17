@@ -2,6 +2,7 @@
 
 ## 0.1.1 - 2026-05-16
 
+- Serialized dynamic rule sync to avoid duplicate-rule-ID races.
 - Switched settings storage from Chrome sync storage to local extension storage.
 - Added one-time migration for settings saved by earlier sync-storage builds.
 - Replaced regex-only blocking rules with simpler dynamic URL filter rules.

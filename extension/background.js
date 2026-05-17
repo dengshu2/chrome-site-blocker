@@ -6,6 +6,7 @@ const DEFAULT_SETTINGS = {
 const RULE_ID_START = 1000;
 const MAX_BLOCKED_SITES = 500;
 let legacyMigration;
+let ruleSyncQueue = Promise.resolve();
 
 async function getSettings() {
   await migrateLegacySyncSettings();
@@ -98,15 +99,17 @@ function ruleForSite(site, index) {
   };
 }
 
+function managedRuleIds() {
+  return Array.from({ length: MAX_BLOCKED_SITES }, (_value, index) => RULE_ID_START + index);
+}
+
 async function syncBlockingRules() {
   const { enabled, blockedSites } = await getSettings();
-  const currentRules = await chrome.declarativeNetRequest.getDynamicRules();
-  const removeRuleIds = currentRules.map((rule) => rule.id);
   const sites = normalizeBlockedSites(Array.isArray(blockedSites) ? blockedSites : []);
   const addRules = enabled ? sites.map(ruleForSite) : [];
 
   await chrome.declarativeNetRequest.updateDynamicRules({
-    removeRuleIds,
+    removeRuleIds: managedRuleIds(),
     addRules
   });
 
@@ -116,8 +119,15 @@ async function syncBlockingRules() {
   };
 }
 
+function queueRuleSync() {
+  const syncTask = ruleSyncQueue.then(syncBlockingRules, syncBlockingRules);
+  ruleSyncQueue = syncTask.catch(() => {});
+
+  return syncTask;
+}
+
 function syncBlockingRulesSafely() {
-  syncBlockingRules().catch((error) => {
+  queueRuleSync().catch((error) => {
     console.error("Failed to sync blocking rules", error);
   });
 }
@@ -138,7 +148,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return false;
   }
 
-  syncBlockingRules()
+  queueRuleSync()
     .then((result) => sendResponse({ ok: true, ...result }))
     .catch((error) => {
       sendResponse({
