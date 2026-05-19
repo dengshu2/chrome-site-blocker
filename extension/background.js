@@ -92,8 +92,7 @@ function ruleForSite(site, index) {
       }
     },
     condition: {
-      urlFilter: `||${baseHost}^`,
-      isUrlFilterCaseSensitive: false,
+      requestDomains: [baseHost],
       resourceTypes: ["main_frame"]
     }
   };
