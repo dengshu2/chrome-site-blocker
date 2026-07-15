@@ -16,8 +16,9 @@ rm -f "$CRX_PATH"
 (
   cd "$EXTENSION_DIR"
   zip -r "$ZIP_PATH" . \
-    -x '.DS_Store' \
-    -x '__MACOSX/*'
+    -x '*.DS_Store' \
+    -x '__MACOSX/*' \
+    -x 'README.md'
 )
 
 echo "Created $ZIP_PATH"

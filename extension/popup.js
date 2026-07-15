@@ -1,9 +1,12 @@
-const DEFAULT_SETTINGS = {
-  enabled: true,
-  blockedSites: []
-};
-
-const MAX_BLOCKED_SITES = 500;
+const {
+  DEFAULT_SETTINGS,
+  MAX_BLOCKED_SITES,
+  normalizeHost,
+  baseHostForRule,
+  isValidEntry,
+  matchesPattern,
+  normalizeEntry
+} = globalThis.SiteBlockerShared;
 
 const state = {
   tab: null,
@@ -16,74 +19,6 @@ const currentHost = document.querySelector("#currentHost");
 const currentStatus = document.querySelector("#currentStatus");
 const toggleSiteButton = document.querySelector("#toggleSiteButton");
 const openOptionsButton = document.querySelector("#openOptionsButton");
-
-function normalizeEntry(value) {
-  const text = value.trim().toLowerCase();
-
-  if (!text) {
-    return "";
-  }
-
-  if (text.startsWith("*.")) {
-    return `*.${normalizeEntry(text.slice(2))}`;
-  }
-
-  const withProtocol = text.includes("://") ? text : `https://${text}`;
-
-  try {
-    return new URL(withProtocol).hostname.replace(/\.$/, "");
-  } catch {
-    return text.replace(/^https?:\/\//, "").split("/")[0].split(":")[0];
-  }
-}
-
-function isValidHostname(hostname) {
-  const labels = hostname.split(".");
-
-  if (labels.length < 2 || hostname.length > 253) {
-    return false;
-  }
-
-  return labels.every((label) => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label));
-}
-
-function isValidEntry(entry) {
-  if (!entry || entry.includes("*")) {
-    return false;
-  }
-
-  return isValidHostname(entry);
-}
-
-function normalizeHost(hostname) {
-  return hostname.toLowerCase().replace(/\.$/, "");
-}
-
-function matchesPattern(hostname, pattern) {
-  const host = normalizeHost(hostname);
-  const rule = normalizeHost(pattern.trim());
-
-  if (!rule) {
-    return false;
-  }
-
-  if (rule.startsWith("*.")) {
-    const base = rule.slice(2);
-    return isValidHostname(base) && (host === base || host.endsWith(`.${base}`));
-  }
-
-  if (rule.includes("*")) {
-    return false;
-  }
-
-  return isValidHostname(rule) && (host === rule || host.endsWith(`.${rule}`));
-}
-
-function baseHostForRule(pattern) {
-  const rule = normalizeHost(pattern.trim());
-
-  return rule.startsWith("*.") ? rule.slice(2) : rule;
-}
 
 function getBlockedSites() {
   return Array.isArray(state.settings.blockedSites) ? state.settings.blockedSites : [];

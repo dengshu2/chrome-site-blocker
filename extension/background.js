@@ -1,10 +1,13 @@
-const DEFAULT_SETTINGS = {
-  enabled: true,
-  blockedSites: []
-};
+importScripts("shared.js");
+
+const {
+  DEFAULT_SETTINGS,
+  MAX_BLOCKED_SITES,
+  baseHostForRule,
+  normalizeBlockedSites
+} = globalThis.SiteBlockerShared;
 
 const RULE_ID_START = 1000;
-const MAX_BLOCKED_SITES = 500;
 let legacyMigration;
 let ruleSyncQueue = Promise.resolve();
 
@@ -38,45 +41,6 @@ async function migrateLegacySyncSettings() {
   })();
 
   return legacyMigration;
-}
-
-function normalizeHost(hostname) {
-  return hostname.toLowerCase().replace(/\.$/, "");
-}
-
-function isValidHostname(hostname) {
-  const labels = hostname.split(".");
-
-  if (labels.length < 2 || hostname.length > 253) {
-    return false;
-  }
-
-  return labels.every((label) => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label));
-}
-
-function baseHostForRule(pattern) {
-  const rule = normalizeHost(pattern.trim());
-
-  return rule.startsWith("*.") ? rule.slice(2) : rule;
-}
-
-function normalizeBlockedSites(blockedSites) {
-  const seen = new Set();
-  const normalizedSites = [];
-
-  for (const site of blockedSites) {
-    const rule = normalizeHost(String(site || "").trim());
-    const baseHost = baseHostForRule(rule);
-
-    if (!isValidHostname(baseHost) || seen.has(rule)) {
-      continue;
-    }
-
-    seen.add(rule);
-    normalizedSites.push(rule);
-  }
-
-  return normalizedSites.slice(0, MAX_BLOCKED_SITES);
 }
 
 function ruleForSite(site, index) {

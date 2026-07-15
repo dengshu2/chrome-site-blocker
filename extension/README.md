@@ -21,7 +21,11 @@
 ## 文件结构
 
 - `manifest.json`: 扩展声明。
-- `background.js`: 导航拦截逻辑。
-- `popup.html` / `popup.js`: 扩展弹窗。
-- `options.html` / `options.js`: 黑名单管理页面。
-- `blocked.html` / `blocked.js`: 访问被拦截时显示的页面。
+- `background.js`: Service Worker，把黑名单编译成 `declarativeNetRequest` 动态规则并保持同步。
+- `shared.js`: 域名归一化、校验和匹配的共享逻辑，被 Service Worker、页面脚本和内容脚本共用。
+- `content.js`: 内容脚本兜底，拦截缓存等场景下绕过动态规则的页面。
+- `popup.html` / `popup.js` / `popup.css`: 扩展弹窗。
+- `options.html` / `options.js` / `options.css`: 黑名单管理页面。
+- `blocked.html` / `blocked.js` / `blocked.css`: 访问被拦截时显示的页面。
+- `shared.css`: 各页面共用样式。
+- `icons/`: 扩展图标。

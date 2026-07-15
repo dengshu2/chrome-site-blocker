@@ -1,6 +1,5 @@
 const params = new URLSearchParams(location.search);
-const redirectedUrl = location.hash.length > 1 ? location.hash.slice(1) : "";
-const originalUrl = params.get("url") || redirectedUrl;
+const originalUrl = params.get("url") || "";
 let site = params.get("site") || params.get("rule") || "当前网站";
 
 if (!params.has("site") && originalUrl) {

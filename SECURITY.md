@@ -4,7 +4,8 @@
 
 Please do not open a public issue for sensitive security reports.
 
-If this project is published under your GitHub account, add a private contact method here before release, such as a security email address or GitHub private vulnerability reporting.
+Report vulnerabilities privately through GitHub Security Advisories:
+<https://github.com/dengshu2/chrome-site-blocker/security/advisories/new>
 
 Include:
 

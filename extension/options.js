@@ -1,9 +1,9 @@
-const DEFAULT_SETTINGS = {
-  enabled: true,
-  blockedSites: []
-};
-
-const MAX_BLOCKED_SITES = 500;
+const {
+  DEFAULT_SETTINGS,
+  MAX_BLOCKED_SITES,
+  isValidEntry,
+  normalizeEntry
+} = globalThis.SiteBlockerShared;
 
 const enabledToggle = document.querySelector("#enabledToggle");
 const addSiteForm = document.querySelector("#addSiteForm");
@@ -14,52 +14,6 @@ const emptyState = document.querySelector("#emptyState");
 const siteCount = document.querySelector("#siteCount");
 
 let settings = DEFAULT_SETTINGS;
-
-function normalizeEntry(value) {
-  const text = value.trim().toLowerCase();
-
-  if (!text) {
-    return "";
-  }
-
-  if (text.startsWith("*.")) {
-    return `*.${normalizeEntry(text.slice(2))}`;
-  }
-
-  const withProtocol = text.includes("://") ? text : `https://${text}`;
-
-  try {
-    return new URL(withProtocol).hostname.replace(/\.$/, "");
-  } catch {
-    return text.replace(/^https?:\/\//, "").split("/")[0].split(":")[0];
-  }
-}
-
-function isValidHostname(hostname) {
-  const labels = hostname.split(".");
-
-  if (labels.length < 2 || hostname.length > 253) {
-    return false;
-  }
-
-  return labels.every((label) => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label));
-}
-
-function isValidEntry(entry) {
-  if (!entry || entry === "*" || entry.includes("..")) {
-    return false;
-  }
-
-  if (entry.startsWith("*.")) {
-    return isValidHostname(entry.slice(2));
-  }
-
-  if (entry.includes("*")) {
-    return false;
-  }
-
-  return isValidHostname(entry);
-}
 
 function getBlockedSites() {
   return Array.isArray(settings.blockedSites) ? settings.blockedSites : [];

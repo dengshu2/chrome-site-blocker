@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.3 - 2026-07-14
+
+- Extracted shared domain helpers into `shared.js`, removing four duplicated copies of the validation and matching logic.
+- Narrowed `web_accessible_resources` to only `blocked.html` to shrink the extension-fingerprinting surface.
+- Declared `minimum_chrome_version` 101, required by `requestDomains` rule conditions.
+- Removed the unused hash-based URL fallback on the blocked page.
+- Fixed packaging to exclude nested `.DS_Store` files and the extension README from the store zip.
+- Added unit tests, ESLint, and a GitHub Actions CI workflow.
+
+## 0.1.2 - 2026-05-19
+
+- Switched dynamic rules from `urlFilter` to `requestDomains` so short domains such as `x.com` are blocked reliably.
+- Added a content-script fallback that blocks pages served from caches before dynamic rules are evaluated.
+
 ## 0.1.1 - 2026-05-16
 
 - Serialized dynamic rule sync to avoid duplicate-rule-ID races.

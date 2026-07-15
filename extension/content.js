@@ -1,5 +1,10 @@
+// Fallback blocker for navigations that slip past declarativeNetRequest
+// (e.g. served from the back/forward or service-worker cache before dynamic
+// rules are re-evaluated). shared.js is injected before this file.
 (async () => {
   if (window !== window.top) return;
+
+  const { normalizeHost, matchesPattern } = globalThis.SiteBlockerShared;
 
   const { enabled, blockedSites } = await chrome.storage.local.get({
     enabled: true,
@@ -10,18 +15,8 @@
     return;
   }
 
-  const hostname = location.hostname.toLowerCase().replace(/\.$/, "");
-
-  function matchesRule(host, rule) {
-    const r = rule.toLowerCase().trim();
-    if (r.startsWith("*.")) {
-      const base = r.slice(2);
-      return host === base || host.endsWith(`.${base}`);
-    }
-    return host === r || host.endsWith(`.${r}`);
-  }
-
-  const matchingRule = blockedSites.find(site => matchesRule(hostname, site));
+  const hostname = normalizeHost(location.hostname);
+  const matchingRule = blockedSites.find((site) => matchesPattern(hostname, site));
 
   if (matchingRule) {
     location.replace(chrome.runtime.getURL(

@@ -13,6 +13,7 @@
 ## 目录结构
 
 - `extension/`: 插件源码。
+- `tests/`: 共享域名逻辑的单元测试（`npm test`）。
 - `scripts/package.sh`: 生成 Chrome Web Store 可上传的 zip 包。
 - `PRIVACY.md`: 隐私说明。
 - `SECURITY.md`: 安全报告说明。
@@ -51,7 +52,7 @@ CHROME_EXTENSION_KEY="/path/to/site-blocker-extension.pem" \
 
 - `declarativeNetRequest`: 根据用户配置的规则拦截或重定向网站访问。
 - `storage`: 在本机保存启用状态和屏蔽列表。
-- `http://*/*`、`https://*/*`: 允许用户屏蔽任意网站。
+- `http://*/*`、`https://*/*`: 允许用户屏蔽任意网站，同时供内容脚本兜底使用——当页面来自缓存、动态规则尚未生效时，由内容脚本比对黑名单后跳转到拦截页。内容脚本只读取页面域名，不读取页面内容。
 
 ## 发布提醒
 
